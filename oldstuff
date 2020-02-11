@@ -1,0 +1,62 @@
+    with open('2012-18_playerBoxScore.csv', newline='') as f:
+        new_rows = []
+        reader = csv.reader(f, delimiter=',', quotechar='|')  # pass the file to our csv reader
+        for row in reader:  # iterate over the rows in the file
+            c = []
+            c.append(row[5])
+            c.append(row[9])
+            c.append(row[17])
+            c.append(row[19])
+            new_rows.append(c)  # add the modified rows
+    print(new_rows)
+
+    players = new_rows
+    bplayers = players[1:]
+    games = []
+    test = bplayers[0][0]
+    c = 0
+    curgame = []
+    first = 1
+    for i in bplayers:
+
+        if i[0] != test:
+            test = i[0]
+            if c == 1:
+                games.append(curgame)
+                curgame = []
+                first = 1
+            c += 1
+            c %= 2
+        if first == 1:
+            curgame.append(i[1])
+            first = 0
+        del i[1]
+        curgame.append(i)
+
+    games.append(curgame)
+
+    games = np.asarray(games)
+
+
+
+    print(games)
+    X = []
+    y = []
+
+    for i in games:
+        X.append(i[1:])
+        y.append(i[0])
+
+    X_train, X_validation, Y_train, Y_validation = train_test_split(X, y, test_size=0.20, random_state=1)
+
+    clf = SVC(gamma=.001, C=100.)
+    models = []
+    models.append(('NB', GaussianNB()))
+    results = []
+    names = []
+    for name, model in models:
+        kfold = StratifiedKFold(n_splits=10, random_state=1, shuffle=True)
+        cv_results = cross_val_score(model, X_train, Y_train, cv=kfold, scoring='accuracy')
+        results.append(cv_results)
+        names.append(name)
+        print('%s: %f (%f)' % (name, cv_results.mean(), cv_results.std()))
